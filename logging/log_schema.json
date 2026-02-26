@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "required": ["ts", "event", "severity"],
+  "properties": {
+    "ts": {"type": "string"},
+    "event": {"type": "string"},
+    "severity": {"type": "string"},
+    "run_id": {"type": "string"},
+    "commit": {"type": "string"},
+    "details": {"type": "object"}
+  }
+}

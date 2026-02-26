@@ -1,0 +1,4 @@
+name: downgrade
+type: protocol_downgrade_attempt
+trigger: during_negotiation
+expected_behavior: abort

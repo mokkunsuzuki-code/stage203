@@ -1,0 +1,7 @@
+name: resilience_test
+qkd_required: false
+fallback_allowed: true
+rekey_interval_sec: 120
+fail_closed: true
+logging_level: debug
+inject_failures: true

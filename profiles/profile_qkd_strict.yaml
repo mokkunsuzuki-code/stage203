@@ -1,0 +1,6 @@
+name: qkd_strict
+qkd_required: true
+fallback_allowed: false
+rekey_interval_sec: 300
+fail_closed: true
+logging_level: info

@@ -1,0 +1,4 @@
+name: qkd_failure
+type: keysource_unavailable
+trigger: on_handshake
+expected_behavior: fail_closed

@@ -1,0 +1,4 @@
+name: rekey_race
+type: concurrent_rekey
+trigger: during_rekey
+expected_behavior: deterministic_resolution_and_log

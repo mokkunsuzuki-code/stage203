@@ -1,0 +1,4 @@
+name: replay
+type: replay_attempt
+trigger: during_handshake
+expected_behavior: reject_and_log

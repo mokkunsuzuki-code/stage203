@@ -1,0 +1,6 @@
+name: hybrid_balanced
+qkd_required: false
+fallback_allowed: true
+rekey_interval_sec: 900
+fail_closed: true
+logging_level: info
