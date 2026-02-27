@@ -1,30 +1,27 @@
 # PoC Report (Stage202)
 
 - Repo: `mokkunsuzuki-code/stage202`
-- Run ID: `None`
-- Run URL: None
+- Run ID: `22473061225`
+- Run URL: https://github.com/mokkunsuzuki-code/stage202/actions/runs/22473061225
 
 ## Claim → required_jobs → CI job link
 
 ### A2
 - required_jobs:
-  - attack_replay (not found)
+  - [stage202](https://github.com/mokkunsuzuki-code/stage202/actions/runs/22473061225/job/65094213001) (failure)
 - evidence_paths:
 
 ### A3
 - required_jobs:
-  - attack_downgrade (not found)
+  - [stage202](https://github.com/mokkunsuzuki-code/stage202/actions/runs/22473061225/job/65094213001) (failure)
 - evidence_paths:
 
 ### A4
 - required_jobs:
-  - no_secret_logging (not found)
-  - zeroize_rules (not found)
+  - [stage202](https://github.com/mokkunsuzuki-code/stage202/actions/runs/22473061225/job/65094213001) (failure)
 - evidence_paths:
 
 ### A5
 - required_jobs:
-  - interop_smoke (not found)
-  - proverif (not found)
-  - tamarin (not found)
+  - [stage202](https://github.com/mokkunsuzuki-code/stage202/actions/runs/22473061225/job/65094213001) (failure)
 - evidence_paths:

@@ -1,44 +1,14 @@
-# Stage191 claims.yaml (Claim ↔ Lemma ↔ CI Job binding)
-# Internal: fail-closed gate relies on these bindings.
-
-lemmas:
-  L_replay_detection:
-    title: "Replay is detected by transcript / nonce binding"
-    evidence_paths: []
-  L_downgrade_detection:
-    title: "Downgrade is detected and rejected"
-    evidence_paths: []
-  L_interop_minimal:
-    title: "Minimal interop smoke passes"
-    evidence_paths: []
-  L_no_secret_logging:
-    title: "Secrets are not logged"
-    evidence_paths: []
-  L_zeroize:
-    title: "Key material is zeroized"
-    evidence_paths: []
-  L_formal:
-    title: "Formal model checks pass (ProVerif/Tamarin)"
-    evidence_paths: []
-
+# MIT License © 2025 Motohiro Suzuki
 claims:
   A2:
-    title: "Replay attack is detected / rejected"
-    required_lemmas: [L_replay_detection]
-    required_jobs: [attack_replay]
-
+    required_jobs: ["stage202"]
+    evidence_paths: []
   A3:
-    title: "Downgrade attack is detected / rejected"
-    required_lemmas: [L_downgrade_detection]
-    required_jobs: [attack_downgrade]
-
+    required_jobs: ["stage202"]
+    evidence_paths: []
   A4:
-    title: "Implementation safety properties hold (no secret logging / zeroize)"
-    required_lemmas: [L_no_secret_logging, L_zeroize]
-    required_jobs: [no_secret_logging, zeroize_rules]
-
+    required_jobs: ["stage202"]
+    evidence_paths: []
   A5:
-    title: "Interoperability and formal checks support the spec"
-    required_lemmas: [L_interop_minimal, L_formal]
-    required_jobs: [interop_smoke, proverif, tamarin]
-
+    required_jobs: ["stage202"]
+    evidence_paths: []

@@ -12,63 +12,26 @@ OUT = ROOT / "poc_report.md"
 def load_json(p: Path):
     return json.loads(p.read_text(encoding="utf-8"))
 
-def pick_run_info(runs: dict):
-    repo = runs.get("repo")
-
-    # try common locations
-    run_id = runs.get("run_id") or runs.get("chosen_run_id") or runs.get("id")
-
-    raw = runs.get("raw", {})
-    run_url = None
-
-    # Stage191 style: raw.chosen.html_url
-    if isinstance(raw, dict):
-        chosen = raw.get("chosen") or raw.get("run") or raw.get("workflow_run")
-        if isinstance(chosen, dict):
-            run_url = chosen.get("html_url") or chosen.get("url")
-            run_id = run_id or chosen.get("id")
-
-    # fallback build URL
-    if repo and run_id and not run_url:
-        run_url = f"https://github.com/{repo}/actions/runs/{run_id}"
-
-    return repo, run_id, run_url
-
-def build_job_index(jobs_payload: dict):
-    jobs = jobs_payload.get("jobs", [])
-    idx = {}
-    for j in jobs:
-        if isinstance(j, dict) and j.get("name"):
-            idx[str(j["name"])] = j
-    return idx
-
-def find_job(required_name: str, job_index: dict):
-    # 1) exact match
-    if required_name in job_index:
-        return job_index[required_name]
-
-    # 2) prefix/contains match (job名に suffix が付くケースに対応)
-    cand = []
-    for name, job in job_index.items():
-        if name == required_name:
-            return job
-        if name.startswith(required_name):
-            cand.append((0, name, job))
-        elif required_name in name:
-            cand.append((1, name, job))
-    if cand:
-        cand.sort(key=lambda x: (x[0], len(x[1])))
-        return cand[0][2]
-    return None
-
 def main():
     runs = load_json(RUNS)
     jobs_payload = load_json(JOBS)
     claims = yaml.safe_load(CLAIMS.read_text(encoding="utf-8"))
 
-    repo, run_id, run_url = pick_run_info(runs)
+    repo = runs.get("repo")
+    chosen = runs.get("chosen", {}) if isinstance(runs.get("chosen"), dict) else {}
+    run_id = chosen.get("id") or runs.get("run_id") or runs.get("id")
+    run_url = chosen.get("html_url") or (f"https://github.com/{repo}/actions/runs/{run_id}" if repo and run_id else None)
 
-    job_index = build_job_index(jobs_payload)
+    job_index = {j.get("name"): j for j in jobs_payload.get("jobs", []) if isinstance(j, dict) and j.get("name")}
+
+    def find_job(required_name: str):
+        if required_name in job_index:
+            return job_index[required_name]
+        # contains match for suffix/prefix variants
+        for name, job in job_index.items():
+            if name and (name.startswith(required_name) or required_name in name):
+                return job
+        return None
 
     lines = []
     lines.append("# PoC Report (Stage202)")
@@ -81,14 +44,17 @@ def main():
     lines.append("")
 
     claims_root = claims.get("claims", claims)
+
     for claim, obj in claims_root.items():
+        if not isinstance(obj, dict):
+            continue
         lines.append(f"### {claim}")
         rj = obj.get("required_jobs", []) or []
         ev = obj.get("evidence_paths", []) or []
         lines.append("- required_jobs:")
         for jn in rj:
             jn = str(jn)
-            job = find_job(jn, job_index)
+            job = find_job(jn)
             if job:
                 name = job.get("name")
                 url = job.get("html_url")
