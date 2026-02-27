@@ -25,17 +25,26 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pyyaml
 
-      # ★ここが本質：CI内で out/ci を生成する
+      # ★gh が無いと fetch_actions_results.py が落ちる実装が多いので、先に入れる
+      - name: Install GitHub CLI (gh)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+          gh --version
+
       - name: Fetch Actions results (self)
         env:
           GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           mkdir -p out/ci
           python tools/fetch_actions_results.py --repo "${{ github.repository }}"
+          ls -la out/ci
 
       - name: Generate PoC report
         run: |
           python tools/gen_poc_report.py
+          ls -la poc_report.md
 
       - name: Upload PoC report (artifact)
         uses: actions/upload-artifact@v4
