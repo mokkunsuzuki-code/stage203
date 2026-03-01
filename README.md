@@ -1,61 +1,80 @@
-Stage203 is open for external review and critique.
+# Stage203 — External Review Open
 
-This stage establishes:
+Stage203 は外部からのレビューおよび批評を受け付けています。
 
-- Reproducible PoC execution (`./run_poc.sh`)
-- Claim-bound CI verification
-- Structured claim → job → artifact linkage
-- Machine-readable evidence logs (`poc.jsonl`)
+本ステージは、理論的主張ではなく、
+**再現可能な claim → execution → evidence 構造の確立** を目的としています。
 
-### Non-goals
+---
 
-- No unconditional QKD guarantees
-- No formal proof completeness claim
-- No production deployment claim
+## この段階で確立されるもの
 
-### Review Thread
+- 再現可能な PoC 実行（`./run_poc.sh`）
+- クレームバウンド CI 検証
+- 構造化された claim → job → artifact リンク
+- 機械可読な証拠ログ（`poc.jsonl`）
+- fail-closed セマンティクス
 
-We welcome architectural critique, assumption analysis, attack expansion suggestions, and CI verification feedback.
+---
 
-👉 Review here:  
+## 非目標（Non-Goals）
+
+Stage203 は以下を主張しません：
+
+- 無条件 QKD セキュリティ保証
+- 形式証明の完全性
+- 本番環境導入の準備完了
+- ネットワーク層攻撃耐性の完全性
+
+この段階はあくまで
+
+> 再現可能な検証構造の確立
+
+に限定されます。
+
+---
+
+## 🔍 Review Thread
+
+アーキテクチャ批評、仮定分析、攻撃拡張提案、CI検証ギャップの指摘などを歓迎します。
+
+👉 Reviewはこちら  
 https://github.com/mokkunsuzuki-code/stage203/issues/1
 
-👉 Release:  
+👉 Release  
 https://github.com/mokkunsuzuki-code/stage203/releases/tag/v0.3-stage203
 
 ---
 
-QSP: Claim-Bound, CI-Verifiable Quantum-Safe Session Architecture  
+# QSP: Claim-bound, CI-verifiable session architecture
+
 MIT License © 2025 Motohiro Suzuki
 
 ---
 
-## Overview
+# 概要
 
-Stage203 upgrades Stage202 into an **external-review-ready PoC**.
+Stage203 は Stage202 を外部レビュー対応の Mini-PoC にアップグレードします。
 
-This stage provides:
+提供されるもの：
 
-- One-command reproducibility
-- Automatic evidence generation
-- Claim ↔ CI job binding
-- Machine-verifiable PoC report
-- GitHub Actions artifact output
+- ワンコマンド再現
+- 自動証拠生成
+- Claim ↔ CI job バインディング
+- 機械検証可能な PoC レポート
+- GitHub Actions アーティファクト出力
 
-This is not a theoretical security claim.
-
-This is a reproducible execution-bound structure.
+これは理論主張ではありません。  
+これは実行拘束型の検証構造です。
 
 ---
 
-## Quick Review (1 Command)
-
-### 🔵 Full Evidence Chain (Local – Recommended)
+# Quick Review（1コマンド）
 
 ```bash
 INSTALL_DEPS=1 ./run_poc.sh
 
-This generates:
+生成物：
 
 out/poc_logs/poc.jsonl
 
@@ -63,55 +82,38 @@ out/evidence/**
 
 out/reports/poc_report.md
 
-This is the authoritative verification path.
+これが authoritative verification path です。
 
-🟢 CI (Artifact Generation)
+CI 動作
 
-GitHub Actions automatically:
+GitHub Actions:
 
-Generates PoC evidence bundle
+PoC evidence bundle 生成
 
-Fetches job results
+job 結果取得
 
-Produces poc_report.md
+poc_report.md 出力
 
-Uploads stage203-poc-report artifact
+stage203-poc-report アーティファクトアップロード
 
-Note:
+CI は環境依存性排除のため stub PoC log を使用。
 
-CI uses a portable stub PoC log for environment independence.
-Full external-chain validation is performed locally via:
+完全検証はローカル実行：
 
 ./run_poc.sh
-What Stage203 Guarantees
-
-Stage203 enforces:
-
-Claim transparency
-
-Explicit evidence paths
-
-Fail-closed semantics
-
-CI-bound artifact generation
-
-Machine-readable execution logs
-
-Security claims cannot silently degrade.
-
 Claims Structure
 
-Defined in:
+定義：
 
 claims/claims.yaml
 
-Each claim contains:
+各 claim は：
 
 required_jobs
 
 evidence_paths
 
-Example:
+例：
 
 claims:
   A2:
@@ -119,16 +121,17 @@ claims:
     evidence_paths:
       - "out/evidence/attack_replay/result.txt"
 
-Claims are mapped to execution artifacts.
+Claim は execution artifact にバインドされます。
 
 Execution Flow
 Step 1 — PoC Execution
 
 runtime/poc_runner.py
 
-Produces:
+出力：
 
 out/poc_logs/poc.jsonl
+
 Step 2 — Attack Validation
 
 mini_poc/poc_replay
@@ -137,41 +140,42 @@ mini_poc/poc_downgrade
 
 mini_poc/poc_drift_injection
 
-Each produces evidence under:
+出力：
 
-out/evidence/
+out/evidence/**
+
 Step 3 — Report Generation
+
 tools/gen_poc_report.py
 
-Produces:
+出力：
 
 out/reports/poc_report.md
+
 Evidence Chain
 
-The PoC log contains structured events:
+PoC log 例：
 
 {"event":"claim_gate_passed"}
-{"event":"stage191_ci_summary", ...}
+{"event":"stage191_ci_summary"}
 
-mini_poc scripts verify:
+mini_poc スクリプトは：
 
-CI job success (if present)
+CI job 成功確認
 
-Or fallback to claim_gate verification
+または claim_gate fallback
 
-CI-safe behavior in GitHub Actions
+を検証します。
 
-GitHub Actions Workflow
+GitHub Actions
 
 Workflow:
-
 .github/workflows/stage203-ci.yml
 
-Produces artifact:
-
+Artifact:
 stage203-poc-report
 
-Includes:
+含まれるもの：
 
 poc_report.md
 
@@ -185,7 +189,7 @@ out/evidence/**
 
 out/poc_logs/poc.jsonl
 
-Retention: 90 days.
+Retention: 90 days
 
 Repository Structure
 stage203/
@@ -198,53 +202,19 @@ stage203/
 ├── run_poc.sh
 ├── requirements.txt
 └── README.md
-Non-Goals
-
-Stage203 does NOT claim:
-
-Unconditional QKD security
-
-Formal proof completeness
-
-Production deployment readiness
-
-Network-level attack resistance
-
-This stage establishes:
-
-Reproducible claim → execution → evidence linkage.
-
-Nothing more. Nothing hidden.
-
-Review Guidance
-
-If you are reviewing this project:
-
-Run:
-
-INSTALL_DEPS=1 ./run_poc.sh
-
-Inspect:
-
-out/reports/poc_report.md
-
-out/evidence/**
-
-Open a GitHub Issue using the provided review template.
-
 Why Stage203 Matters
 
-Before institutional collaboration or academic review, a system must prove:
+外部共同研究や学術レビュー以前に必要なのは：
 
-Claims are structured
+Claims が構造化されていること
 
-Claims are testable
+Claims が検証可能であること
 
-Claims produce artifacts
+Claims がアーティファクトを生成すること
 
-Claims cannot silently regress
+Claims が静かに劣化しないこと
 
-Stage203 satisfies that threshold.
+Stage203 はその閾値を満たします。
 
 License
 
