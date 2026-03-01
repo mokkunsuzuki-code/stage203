@@ -1,77 +1,123 @@
 # MIT License © 2025 Motohiro Suzuki
+from __future__ import annotations
+
 import json
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import yaml
 
-ROOT = Path(".")
-RUNS = ROOT / "out/ci/actions_runs.json"
-JOBS = ROOT / "out/ci/actions_jobs.json"
-CLAIMS = ROOT / "claims/claims.yaml"
-OUT = ROOT / "poc_report.md"
 
-def load_json(p: Path):
-    return json.loads(p.read_text(encoding="utf-8"))
+def load_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
 
-def main():
-    runs = load_json(RUNS)
-    jobs_payload = load_json(JOBS)
-    claims = yaml.safe_load(CLAIMS.read_text(encoding="utf-8"))
 
-    repo = runs.get("repo")
-    chosen = runs.get("chosen", {}) if isinstance(runs.get("chosen"), dict) else {}
-    run_id = chosen.get("id") or runs.get("run_id") or runs.get("id")
-    run_url = chosen.get("html_url") or (f"https://github.com/{repo}/actions/runs/{run_id}" if repo and run_id else None)
+def load_yaml(path: Path) -> Any:
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
 
-    job_index = {j.get("name"): j for j in jobs_payload.get("jobs", []) if isinstance(j, dict) and j.get("name")}
 
-    def find_job(required_name: str):
-        if required_name in job_index:
-            return job_index[required_name]
-        # contains match for suffix/prefix variants
-        for name, job in job_index.items():
-            if name and (name.startswith(required_name) or required_name in name):
-                return job
-        return None
+def job_index(jobs: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    # jobs items usually include: name, conclusion, status, startedAt, completedAt, url/html_url, databaseId etc.
+    idx: Dict[str, Dict[str, Any]] = {}
+    for j in jobs:
+        name = j.get("name") or j.get("workflowName") or j.get("id")
+        if name:
+            idx[str(name)] = j
+    return idx
 
-    lines = []
-    lines.append("# PoC Report (Stage202)")
+
+def best_job_url(repo: str, run_id: int, job: Dict[str, Any]) -> str:
+    # gh JSON fields differ by version; prefer htmlURL/url/html_url
+    for k in ("htmlURL", "htmlUrl", "html_url", "url"):
+        v = job.get(k)
+        if isinstance(v, str) and v.startswith("http"):
+            return v
+    # fallback: linkable run page (job is still identifiable there)
+    return f"https://github.com/{repo}/actions/runs/{run_id}"
+
+
+def fmt_conclusion(job: Dict[str, Any]) -> str:
+    c = job.get("conclusion") or job.get("conclusionStatus") or job.get("result")
+    s = job.get("status")
+    if c:
+        return str(c)
+    if s:
+        return str(s)
+    return "unknown"
+
+
+def main() -> None:
+    repo = Path("out/ci/actions_runs.json")
+    jobs = Path("out/ci/actions_jobs.json")
+    claims_p = Path("claims/claims.yaml")
+    out_p = Path("poc_report.md")
+
+    if not repo.exists() or not jobs.exists():
+        raise SystemExit("[ERR] missing out/ci/actions_runs.json or actions_jobs.json. Run fetch_actions_results.py first.")
+    if not claims_p.exists():
+        raise SystemExit("[ERR] missing claims/claims.yaml")
+
+    runs_obj = load_json(repo)
+    jobs_obj = load_json(jobs)
+    claims_obj = load_yaml(claims_p)
+
+    repo_name = runs_obj.get("repo", "")
+    run_id = int(runs_obj.get("run_id"))
+    run_html = (runs_obj.get("run") or {}).get("htmlURL") or (runs_obj.get("run") or {}).get("htmlUrl") or (runs_obj.get("run") or {}).get("html_url")
+    if not run_html:
+        run_html = f"https://github.com/{repo_name}/actions/runs/{run_id}"
+
+    jobs_list = jobs_obj.get("jobs", [])
+    jidx = job_index(jobs_list)
+
+    claims = (claims_obj or {}).get("claims", {})
+
+    lines: List[str] = []
+    lines.append("# Stage202 Mini-PoC Report")
     lines.append("")
-    lines.append(f"- Repo: `{repo}`")
+    lines.append("## GitHub Actions Run")
+    lines.append(f"- Run URL: {run_html}")
     lines.append(f"- Run ID: `{run_id}`")
-    lines.append(f"- Run URL: {run_url}")
     lines.append("")
-    lines.append("## Claim → required_jobs → CI job link")
+    lines.append("## Claims → Required CI Jobs → Evidence")
     lines.append("")
+    lines.append("| Claim | Required job | Result | Job link | Evidence path |")
+    lines.append("|---|---|---|---|---|")
 
-    claims_root = claims.get("claims", claims)
+    for claim_id, meta in claims.items():
+        req_jobs = meta.get("required_jobs", []) or []
+        ev_paths = meta.get("evidence_paths", []) or []
 
-    for claim, obj in claims_root.items():
-        if not isinstance(obj, dict):
+        # fail-closed: require at least 1 job
+        if not req_jobs:
+            lines.append(f"| {claim_id} | **MISSING** | unknown | (none) | {', '.join(ev_paths) if ev_paths else '(none)'} |")
             continue
-        lines.append(f"### {claim}")
-        rj = obj.get("required_jobs", []) or []
-        ev = obj.get("evidence_paths", []) or []
-        lines.append("- required_jobs:")
-        for jn in rj:
-            jn = str(jn)
-            job = find_job(jn)
-            if job:
-                name = job.get("name")
-                url = job.get("html_url")
-                concl = job.get("conclusion") or job.get("status")
-                if url:
-                    lines.append(f"  - [{name}]({url}) ({concl})")
-                else:
-                    lines.append(f"  - {name} ({concl})")
-            else:
-                lines.append(f"  - {jn} (not found)")
-        lines.append("- evidence_paths:")
-        for e in ev:
-            lines.append(f"  - `{e}`")
-        lines.append("")
 
-    OUT.write_text("\n".join(lines), encoding="utf-8")
+        for i, job_name in enumerate(req_jobs):
+            job = jidx.get(job_name)
+            if not job:
+                # fail-closed: job not found in this run
+                lines.append(f"| {claim_id if i==0 else ''} | `{job_name}` | **NOT FOUND IN RUN** | {run_html} | {ev_paths[i] if i < len(ev_paths) else ''} |")
+                continue
+
+            result = fmt_conclusion(job)
+            link = best_job_url(repo_name, run_id, job)
+            ev = ev_paths[i] if i < len(ev_paths) else ""
+            lines.append(f"| {claim_id if i==0 else ''} | `{job_name}` | **{result}** | {link} | `{ev}` |")
+
+    lines.append("")
+    lines.append("## Evidence Bundle (artifact)")
+    lines.append("- Included paths:")
+    lines.append("  - `poc_report.md`")
+    lines.append("  - `claims/claims.yaml`")
+    lines.append("  - `out/ci/actions_runs.json`")
+    lines.append("  - `out/ci/actions_jobs.json`")
+    lines.append("  - `out/evidence/**`")
+    lines.append("")
+
+    out_p.write_text("\n".join(lines), encoding="utf-8")
     print("[OK] wrote poc_report.md")
+
 
 if __name__ == "__main__":
     main()

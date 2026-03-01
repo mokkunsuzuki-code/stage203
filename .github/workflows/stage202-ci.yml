@@ -93,7 +93,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p out/ci
-          python tools/fetch_actions_results.py --repo "${{ github.repository }}"
+          python tools/fetch_actions_results.py --repo "${{ github.repository }}" --run-id "${{ github.run_id }}"
           ls -la out/ci
 
       - name: Generate PoC report

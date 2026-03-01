@@ -1,13 +1,4 @@
 # MIT License © 2025 Motohiro Suzuki
-"""
-Fetch GitHub Actions run + jobs JSON and write to out/ci/.
-
-Supports:
-  --repo owner/repo
-  --run-id <id>        (CIから渡される)
-  --branch main        (run-id未指定時に使用)
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -15,72 +6,108 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from typing import Any, Dict
-
-API_PREFIX = "repos"
-OUTDIR = Path("out/ci")
+from typing import Any, Dict, List, Optional
 
 
-def die(msg: str) -> None:
-    raise SystemExit(msg if msg.endswith("\n") else msg + "\n")
+def sh(cmd: List[str], env: Optional[Dict[str, str]] = None) -> str:
+    r = subprocess.run(cmd, check=True, text=True, capture_output=True, env=env)
+    return r.stdout
 
 
-def gh_api(path: str) -> Any:
-    """Use gh CLI (assumes gh auth login済み)"""
-    cmd = ["gh", "api", path]
-    r = subprocess.run(cmd, capture_output=True, text=True)
-    if r.returncode != 0:
-        die(f"[FAIL] gh api failed: {r.stderr}")
-    return json.loads(r.stdout)
+def gh_env() -> Dict[str, str]:
+    env = os.environ.copy()
+    # GitHub Actions: GH_TOKEN or GITHUB_TOKEN
+    # Local: you likely already did `gh auth login`
+    if "GH_TOKEN" not in env and "GITHUB_TOKEN" in env:
+        env["GH_TOKEN"] = env["GITHUB_TOKEN"]
+    return env
 
 
-def write_json(path: Path, data: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+def load_json(s: str) -> Any:
+    return json.loads(s) if s.strip() else None
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--repo", required=True)
-    ap.add_argument("--run-id")
-    ap.add_argument("--branch", default="main")
+    ap.add_argument("--repo", required=True, help="owner/repo")
+    ap.add_argument("--run-id", type=int, default=None, help="Fix the target run_id (fail-closed).")
+    ap.add_argument("--out-dir", default="out/ci", help="Output directory")
     args = ap.parse_args()
 
-    repo = args.repo
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    # -----------------------------
-    # run_id 決定
-    # -----------------------------
-    if args.run_id:
+    env = gh_env()
+
+    # 1) Determine run_id
+    if args.run_id is not None:
         run_id = args.run_id
-        run_data = gh_api(f"{API_PREFIX}/{repo}/actions/runs/{run_id}")
     else:
-        data = gh_api(f"{API_PREFIX}/{repo}/actions/runs?per_page=1")
-        runs = data.get("workflow_runs", [])
+        # fallback: latest run
+        runs_json = sh(
+            [
+                "gh",
+                "run",
+                "list",
+                "--repo",
+                args.repo,
+                "--limit",
+                "1",
+                "--json",
+                "databaseId,status,conclusion,createdAt,headSha,displayTitle,event",
+            ],
+            env=env,
+        )
+        runs = load_json(runs_json) or []
         if not runs:
-            die("[FAIL] no runs found")
-        run_data = runs[0]
-        run_id = run_data["id"]
+            raise SystemExit("[ERR] no runs found")
+        run_id = int(runs[0]["databaseId"])
 
-    # 保存（run情報）
-    write_json(OUTDIR / "actions_runs.json", {
-        "repo": repo,
-        "chosen": run_data
-    })
+    # 2) Fetch run (single) + jobs (for that run)
+    run_json = sh(
+        [
+            "gh",
+            "run",
+            "view",
+            str(run_id),
+            "--repo",
+            args.repo,
+            "--json",
+            "databaseId,status,conclusion,createdAt,headSha,displayTitle,event,htmlURL",
+        ],
+        env=env,
+    )
+    run_obj = load_json(run_json)
 
-    # -----------------------------
-    # jobs 取得
-    # -----------------------------
-    jobs_data = gh_api(f"{API_PREFIX}/{repo}/actions/runs/{run_id}/jobs?per_page=100")
+    jobs_json = sh(
+        [
+            "gh",
+            "run",
+            "view",
+            str(run_id),
+            "--repo",
+            args.repo,
+            "--json",
+            "jobs",
+        ],
+        env=env,
+    )
+    jobs_obj = load_json(jobs_json)
 
-    write_json(OUTDIR / "actions_jobs.json", {
-        "repo": repo,
-        "run_id": run_id,
-        **jobs_data
-    })
+    runs_out = out_dir / "actions_runs.json"
+    jobs_out = out_dir / "actions_jobs.json"
 
-    print(f"[OK] wrote: out/ci/actions_runs.json")
-    print(f"[OK] wrote: out/ci/actions_jobs.json")
+    runs_out.write_text(
+        json.dumps({"repo": args.repo, "run_id": run_id, "run": run_obj}, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    jobs_out.write_text(
+        json.dumps({"repo": args.repo, "run_id": run_id, "jobs": jobs_obj.get("jobs", [])}, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    print(f"[OK] wrote: {runs_out}")
+    print(f"[OK] wrote: {jobs_out}")
     print(f"[OK] chosen run: {run_id}")
 
 
