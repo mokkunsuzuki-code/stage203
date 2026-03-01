@@ -1,4 +1,29 @@
-Stage203 — External-Ready PoC (One-Command Reproducibility)
+Stage203 is open for external review and critique.
+
+This stage establishes:
+
+- Reproducible PoC execution (`./run_poc.sh`)
+- Claim-bound CI verification
+- Structured claim → job → artifact linkage
+- Machine-readable evidence logs (`poc.jsonl`)
+
+### Non-goals
+
+- No unconditional QKD guarantees
+- No formal proof completeness claim
+- No production deployment claim
+
+### Review Thread
+
+We welcome architectural critique, assumption analysis, attack expansion suggestions, and CI verification feedback.
+
+👉 Review here:  
+https://github.com/mokkunsuzuki-code/stage203/issues/1
+
+👉 Release:  
+https://github.com/mokkunsuzuki-code/stage203/releases/tag/v0.3-stage203
+
+---
 
 QSP: Claim-Bound, CI-Verifiable Quantum-Safe Session Architecture  
 MIT License © 2025 Motohiro Suzuki
