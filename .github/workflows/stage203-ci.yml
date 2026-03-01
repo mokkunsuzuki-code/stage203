@@ -31,11 +31,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p out/poc_logs
-          cat > out/poc_logs/poc.jsonl << 'JSONL'
-{"event":"poc_started","details":{"mode":"ci_stub"}}
-{"event":"claim_gate_passed","details":{"mode":"ci_stub"}}
-{"event":"poc_finished","details":{"mode":"ci_stub"}}
-JSONL
+          printf '%s\n' \
+            '{"event":"poc_started","details":{"mode":"ci_stub"}}' \
+            '{"event":"claim_gate_passed","details":{"mode":"ci_stub"}}' \
+            '{"event":"poc_finished","details":{"mode":"ci_stub"}}' \
+            > out/poc_logs/poc.jsonl
           wc -l out/poc_logs/poc.jsonl
           tail -n 5 out/poc_logs/poc.jsonl || true
 
@@ -65,11 +65,11 @@ JSONL
         run: |
           set -euo pipefail
           mkdir -p out/poc_logs
-          cat > out/poc_logs/poc.jsonl << 'JSONL'
-{"event":"poc_started","details":{"mode":"ci_stub"}}
-{"event":"claim_gate_passed","details":{"mode":"ci_stub"}}
-{"event":"poc_finished","details":{"mode":"ci_stub"}}
-JSONL
+          printf '%s\n' \
+            '{"event":"poc_started","details":{"mode":"ci_stub"}}' \
+            '{"event":"claim_gate_passed","details":{"mode":"ci_stub"}}' \
+            '{"event":"poc_finished","details":{"mode":"ci_stub"}}' \
+            > out/poc_logs/poc.jsonl
           wc -l out/poc_logs/poc.jsonl
           tail -n 5 out/poc_logs/poc.jsonl || true
 
@@ -99,11 +99,11 @@ JSONL
         run: |
           set -euo pipefail
           mkdir -p out/poc_logs
-          cat > out/poc_logs/poc.jsonl << 'JSONL'
-{"event":"poc_started","details":{"mode":"ci_stub"}}
-{"event":"claim_gate_passed","details":{"mode":"ci_stub"}}
-{"event":"poc_finished","details":{"mode":"ci_stub"}}
-JSONL
+          printf '%s\n' \
+            '{"event":"poc_started","details":{"mode":"ci_stub"}}' \
+            '{"event":"claim_gate_passed","details":{"mode":"ci_stub"}}' \
+            '{"event":"poc_finished","details":{"mode":"ci_stub"}}' \
+            > out/poc_logs/poc.jsonl
           wc -l out/poc_logs/poc.jsonl
           tail -n 5 out/poc_logs/poc.jsonl || true
 
@@ -150,11 +150,11 @@ JSONL
         run: |
           set -euo pipefail
           mkdir -p out/poc_logs
-          cat > out/poc_logs/poc.jsonl << 'JSONL'
-{"event":"poc_started","details":{"mode":"ci_stub"}}
-{"event":"claim_gate_passed","details":{"mode":"ci_stub"}}
-{"event":"poc_finished","details":{"mode":"ci_stub"}}
-JSONL
+          printf '%s\n' \
+            '{"event":"poc_started","details":{"mode":"ci_stub"}}' \
+            '{"event":"claim_gate_passed","details":{"mode":"ci_stub"}}' \
+            '{"event":"poc_finished","details":{"mode":"ci_stub"}}' \
+            > out/poc_logs/poc.jsonl
           wc -l out/poc_logs/poc.jsonl
           tail -n 5 out/poc_logs/poc.jsonl || true
 
