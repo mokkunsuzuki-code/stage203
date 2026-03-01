@@ -1,0 +1,4 @@
+# MIT License © 2025 Motohiro Suzuki
+# Stage203: dev/test dependencies
+
+pytest>=8.0

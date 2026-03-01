@@ -1,0 +1,47 @@
+name: External Review (Stage203)
+description: Report findings on reproducibility, evidence, and claims linkage
+title: "[Review] Stage203: <your focus>"
+labels: ["external-review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reviewing Stage203.
+        Please run:
+          INSTALL_DEPS=1 ./run_poc.sh
+        and attach outputs if possible.
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS / Python version / install notes
+      placeholder: "macOS 14.x, Python 3.10.x, etc."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: What you ran
+      description: Commands executed
+      value: |
+        INSTALL_DEPS=1 ./run_poc.sh
+    validations:
+      required: true
+
+  - type: textarea
+    id: results
+    attributes:
+      label: Results / Evidence
+      description: Paste key outputs or attach files (poc_report.md, evidence result.txt)
+    validations:
+      required: true
+
+  - type: textarea
+    id: comments
+    attributes:
+      label: Comments / Suggestions
+      description: What is unclear? What should be improved?
+    validations:
+      required: false

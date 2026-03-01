@@ -1,0 +1,11 @@
+# MIT License © 2025 Motohiro Suzuki
+# Stage203: minimal runtime dependencies (external reproducibility)
+
+cryptography>=41
+PyYAML>=6.0
+numpy>=1.26
+psutil>=5.9
+
+# PQC / QKD related libs (keep if used by runtime)
+pqcrypto>=0.3
+PySPX>=0.5
