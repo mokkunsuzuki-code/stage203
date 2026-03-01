@@ -1,14 +1,21 @@
 # MIT License © 2025 Motohiro Suzuki
 claims:
   A2:
-    required_jobs: ["stage202"]
-    evidence_paths: []
+    required_jobs: ["attack_replay"]
+    evidence_paths:
+      - "out/evidence/attack_replay/result.txt"
+
   A3:
-    required_jobs: ["stage202"]
-    evidence_paths: []
+    required_jobs: ["attack_downgrade"]
+    evidence_paths:
+      - "out/evidence/attack_downgrade/result.txt"
+
   A4:
-    required_jobs: ["stage202"]
-    evidence_paths: []
+    required_jobs: ["attack_drift_injection"]
+    evidence_paths:
+      - "out/evidence/attack_drift_injection/result.txt"
+
   A5:
-    required_jobs: ["stage202"]
-    evidence_paths: []
+    required_jobs: ["interop_smoke"]
+    evidence_paths:
+      - "out/evidence/interop_smoke/smoke.txt"

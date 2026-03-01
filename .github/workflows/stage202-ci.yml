@@ -10,8 +10,53 @@ permissions:
   contents: read
 
 jobs:
-  stage202:
+  attack_replay:
+    name: attack_replay
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run mini PoC (replay)
+        run: |
+          bash mini_poc/poc_replay/run.sh
+
+  attack_downgrade:
+    name: attack_downgrade
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run mini PoC (downgrade)
+        run: |
+          bash mini_poc/poc_downgrade/run.sh
+
+  attack_drift_injection:
+    name: attack_drift_injection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run mini PoC (drift injection)
+        run: |
+          bash mini_poc/poc_drift_injection/run.sh
+
+  interop_smoke:
+    name: interop_smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Interop smoke (placeholder)
+        run: |
+          set -euo pipefail
+          mkdir -p out/evidence/interop_smoke
+          echo "[OK] interop_smoke placeholder" | tee out/evidence/interop_smoke/smoke.txt
+
+  poc_report:
+    name: poc_report
+    runs-on: ubuntu-latest
+    needs:
+      - attack_replay
+      - attack_downgrade
+      - attack_drift_injection
+      - interop_smoke
+
     steps:
       - uses: actions/checkout@v4
 
@@ -25,24 +70,35 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pyyaml
 
-      # ★gh が無いと fetch_actions_results.py が落ちる実装が多いので、先に入れる
       - name: Install GitHub CLI (gh)
         run: |
           sudo apt-get update
           sudo apt-get install -y gh
           gh --version
 
+      - name: Generate local evidence bundle (for artifact)
+        run: |
+          set -euo pipefail
+          bash mini_poc/poc_replay/run.sh
+          bash mini_poc/poc_downgrade/run.sh
+          bash mini_poc/poc_drift_injection/run.sh
+          mkdir -p out/evidence/interop_smoke
+          echo "[OK] interop_smoke placeholder" | tee out/evidence/interop_smoke/smoke.txt
+          find out -maxdepth 4 -type f -print
+
       - name: Fetch Actions results (self)
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           mkdir -p out/ci
           python tools/fetch_actions_results.py --repo "${{ github.repository }}"
           ls -la out/ci
 
       - name: Generate PoC report
         run: |
+          set -euo pipefail
           python tools/gen_poc_report.py
           ls -la poc_report.md
 
@@ -55,5 +111,6 @@ jobs:
             claims/claims.yaml
             out/ci/actions_runs.json
             out/ci/actions_jobs.json
+            out/evidence/**
           if-no-files-found: error
           retention-days: 90
